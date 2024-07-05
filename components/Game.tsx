@@ -1,27 +1,60 @@
-import { useParams } from "next/navigation";
-import { useState } from "react";
+"use client";
+import { useEffect, useState } from "react";
 import PlayingCard from "./PlayingCard";
 import Players from "./Players";
 import { Player } from "@/lib/Player";
+import { useChannel, usePresence, usePresenceListener } from "ably/react";
+import shortUUID from "short-uuid";
 
-export default function Game() {
-  const params = useParams<{ gameId: string }>();
+export default function Game({
+  channelName,
+  gameId,
+}: {
+  channelName: string;
+  gameId: string;
+}) {
   const [inputEnabled, setInputEnabled] = useState<boolean>(true);
-  const [player, setPlayer] = useState<Player>(new Player("You"));
+  const [player, setPlayer] = useState<Player>(
+    new Player(shortUUID.generate(), "You")
+  );
   const [players, setPlayers] = useState<Player[]>([player]);
   const [name, setName] = useState<string>("");
   const fibonacci = [1, 2, 3, 5, 8, 13, 21, "?"];
+  const { channel, ably } = useChannel(channelName, (message) => {
+    console.log(message);
+  });
+
+  const { updateStatus } = usePresence(channelName, player);
+
+  const { presenceData } = usePresenceListener<Player>(channelName);
+
+  useEffect(() => {
+    console.log(presenceData);
+    const ps = presenceData.map((presence, i) => {
+      let p: Player;
+      p = presence.data;
+      return p;
+    });
+    setPlayers(ps);
+  }, [presenceData]);
 
   function handleInputBlur() {
     if (!name) return;
     setInputEnabled(false);
+    updateStatus(player);
   }
 
   function onVote(value: string | number) {
     player.choice = value;
     player.done = true;
     setPlayer(player);
-    setPlayers([player, ...players.slice(1, players.length - 1)]);
+    setPlayers([player, ...players.filter((i) => i.id === player.id)]);
+    const message = {
+      playerId: player.id,
+      playerName: player.name,
+      vote: player.choice,
+    };
+    channel.publish("vote", message);
   }
 
   function showVotes() {
@@ -57,7 +90,7 @@ export default function Game() {
           <div className="shadow p-3">
             <div className="row">
               <div className="col">
-                <p className="fs-2">Game {params.gameId}</p>
+                <p className="fs-2">Game {gameId}</p>
               </div>
               <div className="col-4">
                 <p className="fs-2">

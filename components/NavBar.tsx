@@ -13,7 +13,7 @@ export default function NavBar() {
     <nav className="navbar navbar-expand-lg bg-body-tertiary">
       <div className="container-fluid">
         <Link className="navbar-brand" href={"/"}>
-          NextDeck
+          Yet Another Scrum Poker
         </Link>
         {showNewGame && (
           <button

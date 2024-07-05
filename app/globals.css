@@ -1,0 +1,12 @@
+.card-size {
+    width: 80px;
+    height: 120px;
+}
+
+.card-back {
+    background-color: darkblue;
+}
+
+.card-front {
+    background-color: whitesmoke;
+}

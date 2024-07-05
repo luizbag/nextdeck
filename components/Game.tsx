@@ -1,7 +1,6 @@
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import PlayingCard from "./PlayingCard";
-import PreviousGames from "./PreviousGames";
 import Players from "./Players";
 import { Player } from "@/lib/Player";
 
@@ -10,7 +9,6 @@ export default function Game() {
   const [inputEnabled, setInputEnabled] = useState<boolean>(true);
   const [player, setPlayer] = useState<Player>(new Player("You"));
   const [players, setPlayers] = useState<Player[]>([player]);
-  const [games, setGames] = useState<(string | number)[]>([]);
   const [name, setName] = useState<string>("");
   const fibonacci = [1, 2, 3, 5, 8, 13, 21, "?"];
 
@@ -44,14 +42,6 @@ export default function Game() {
       return player;
     });
     setPlayers(ps);
-  }
-
-  function acceptVotes() {
-    if (player.choice !== "") {
-      const g = [...games.slice(), player.choice];
-      setGames(g);
-      resetVotes();
-    }
   }
 
   function setPlayerName(name: string) {
@@ -111,20 +101,12 @@ export default function Game() {
                 </button>
               </div>
               <div className="col text-center">
-                <button className="btn btn-success" onClick={acceptVotes}>
-                  Accept
-                </button>
-              </div>
-              <div className="col text-center">
                 <button className="btn btn-secondary" onClick={resetVotes}>
                   Reset
                 </button>
               </div>
             </div>
           </div>
-        </div>
-        <div className="col-3 ms-2 shadow p-3">
-          <PreviousGames games={games} />
         </div>
       </div>
     </div>

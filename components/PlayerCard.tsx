@@ -10,12 +10,10 @@ export default function PlayerCard({ player }: { player: Player }) {
     <div className="col text-center">
       <div className="card card-size card-back shadow">
         <div className="card-title">
-          <p className="text-light">
-            {player.name}
-            <Icon done={player.done}></Icon>
-          </p>
+          <p className="text-light">{player.name}</p>
         </div>
-        <div className="card-body text-light">
+        <div className="card-body text-light fs-3">
+          {!player.reveal && <Icon done={player.done}></Icon>}
           {player.reveal && player.choice}
         </div>
       </div>

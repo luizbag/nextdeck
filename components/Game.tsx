@@ -23,11 +23,15 @@ export default function Game() {
     player.choice = value;
     player.done = true;
     setPlayer(player);
-    //setPlayers([player, ...players.slice(1, players.length - 1)]);
+    setPlayers([player, ...players.slice(1, players.length - 1)]);
   }
 
   function showVotes() {
-    const ps = players.map;
+    const ps = players.map((player, i) => {
+      player.reveal = true;
+      return player;
+    });
+    setPlayers(ps);
   }
 
   function resetVotes() {
@@ -37,6 +41,7 @@ export default function Game() {
       player.choice = "";
       player.done = false;
       player.reveal = false;
+      return player;
     });
     setPlayers(ps);
   }

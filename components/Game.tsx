@@ -5,6 +5,8 @@ import Players from "./Players";
 import { Player } from "@/lib/Player";
 import { useChannel, usePresence, usePresenceListener } from "ably/react";
 import shortUUID from "short-uuid";
+import PlayerName from "./PlayerName";
+import { Message } from "ably";
 
 export default function Game({
   channelName,
@@ -13,15 +15,26 @@ export default function Game({
   channelName: string;
   gameId: string;
 }) {
-  const [inputEnabled, setInputEnabled] = useState<boolean>(true);
   const [player, setPlayer] = useState<Player>(
     new Player(shortUUID.generate(), "You")
   );
   const [players, setPlayers] = useState<Player[]>([player]);
-  const [name, setName] = useState<string>("");
   const fibonacci = [1, 2, 3, 5, 8, 13, 21, "?"];
   const { channel, ably } = useChannel(channelName, (message) => {
     console.log(message);
+    if (message.connectionId !== ably.connection.id) {
+      switch (message.name) {
+        case "vote":
+          handleVoteMessage(message);
+          break;
+        case "show":
+          showVotes();
+          break;
+        case "reset":
+          resetVotes();
+          break;
+      }
+    }
   });
 
   const { updateStatus } = usePresence(channelName, player);
@@ -38,23 +51,29 @@ export default function Game({
     setPlayers(ps);
   }, [presenceData]);
 
-  function handleInputBlur() {
-    if (!name) return;
-    setInputEnabled(false);
-    updateStatus(player);
+  function handleVoteMessage(message: Message) {
+    let p = players.find((i) => i.id === message.data.playerId);
+    if (p) {
+      p.choice = message.data.vote;
+      p.done = true;
+      updatePlayers(p);
+    }
   }
 
   function onVote(value: string | number) {
     player.choice = value;
     player.done = true;
     setPlayer(player);
-    setPlayers([player, ...players.filter((i) => i.id === player.id)]);
+    updatePlayers(player);
     const message = {
       playerId: player.id,
-      playerName: player.name,
       vote: player.choice,
     };
     channel.publish("vote", message);
+  }
+
+  function updatePlayers(player: Player) {
+    setPlayers([player, ...players.filter((i) => i.id !== player.id)]);
   }
 
   function showVotes() {
@@ -63,6 +82,11 @@ export default function Game({
       return player;
     });
     setPlayers(ps);
+  }
+
+  function onShowVotes() {
+    showVotes();
+    channel.publish("show", {});
   }
 
   function resetVotes() {
@@ -77,10 +101,16 @@ export default function Game({
     setPlayers(ps);
   }
 
+  function onResetVotes() {
+    resetVotes();
+    channel.publish("reset", {});
+  }
+
   function setPlayerName(name: string) {
-    setName(name);
     player.name = name;
     setPlayer(player);
+    updateStatus(player);
+    updatePlayers(player);
   }
 
   return (
@@ -92,31 +122,7 @@ export default function Game({
               <div className="col">
                 <p className="fs-2">Game {gameId}</p>
               </div>
-              <div className="col-4">
-                <p className="fs-2">
-                  {inputEnabled && (
-                    <input
-                      type="text"
-                      placeholder="User Name"
-                      className="form-control"
-                      value={name}
-                      onChange={(e) => setPlayerName(e.target.value)}
-                      onBlur={() => handleInputBlur()}
-                    ></input>
-                  )}
-                  {!inputEnabled && (
-                    <>
-                      {name}
-                      <button
-                        className="btn btn-secondary ms-3"
-                        onClick={() => setInputEnabled(true)}
-                      >
-                        Change Name
-                      </button>
-                    </>
-                  )}
-                </p>
-              </div>
+              <PlayerName setPlayerName={setPlayerName} />
             </div>
             <Players players={players} />
             <div className="row mt-3">
@@ -129,12 +135,12 @@ export default function Game({
             </div>
             <div className="row mt-3">
               <div className="col text-center">
-                <button className="btn btn-primary" onClick={showVotes}>
+                <button className="btn btn-primary" onClick={onShowVotes}>
                   Show Votes
                 </button>
               </div>
               <div className="col text-center">
-                <button className="btn btn-secondary" onClick={resetVotes}>
+                <button className="btn btn-secondary" onClick={onResetVotes}>
                   Reset
                 </button>
               </div>

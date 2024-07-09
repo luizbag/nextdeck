@@ -1,9 +1,11 @@
+import { MouseEventHandler } from "react";
+
 export default function PlayingCard({
   value,
   onVote,
 }: {
   value: React.ReactNode;
-  onVote: any;
+  onVote: MouseEventHandler;
 }) {
   return (
     <div className="col text-center">
